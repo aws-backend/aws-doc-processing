@@ -1,10 +1,9 @@
-# document-processing-platform
-Gradle multi-module проект
+# aws-doc-processing
 
 AWS Console - https://eu-north-1.console.aws.amazon.com/console/home?region=eu-north-1
 
-Generate banner -  http://patorjk.com/software/taag
+Git repo: https://github.com/aws-backend/aws-doc-processing
 
-ASCII Art font: ANSI Shadow, Filter: None
+Git Issues: https://github.com/aws-backend/aws-doc-processing/issues
 
-Найти процесс, занимающий порт xxxx:
+Git Project: https://github.com/orgs/aws-backend/projects/3
