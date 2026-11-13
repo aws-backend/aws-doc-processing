@@ -1,18 +1,19 @@
 plugins {
-    id("java")
-}
-
-group = "com.gmail.alexei28.aws.docproc.lambda"
-version = "0.0.1-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+    java
+    id("io.spring.dependency-management")
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:6.0.0"))
+    // Domain
+    implementation(project(":aws-docproc-domain"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.1"))
+    implementation("software.amazon.awssdk:secretsmanager")
+    implementation("com.amazonaws:aws-lambda-java-core:1.4.1")
+    implementation("com.amazonaws:aws-lambda-java-events:3.16.1")
+    implementation("org.mongodb:mongodb-driver-sync:5.14.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.mockito:mockito-core")
 }
 
 tasks.test {
