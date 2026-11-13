@@ -1,32 +1,28 @@
 plugins {
 	java
-	id("org.springframework.boot") version "4.1.2"
-	id("io.spring.dependency-management") version "1.1.7"
+	id("org.springframework.boot") version "4.1.2" apply false
+	id("io.spring.dependency-management") version "1.1.7" apply false
 }
 
-group = "com.gmail.alexei28.aws.docproc"
-version = "0.0.1-SNAPSHOT"
+allprojects {
+	group = "com.gmail.alexei28.docproc"
+	version = "1.0.0"
+}
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+subprojects {
+	apply(plugin = "java")
+
+	extensions.configure<JavaPluginExtension> {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
 	}
-}
 
-repositories {
-	mavenCentral()
-}
+	tasks.withType<Test> {
+		useJUnitPlatform()
+	}
 
-dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-actuator")
-	implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.withType<Test> {
-	useJUnitPlatform()
+	repositories {
+		mavenCentral()
+	}
 }

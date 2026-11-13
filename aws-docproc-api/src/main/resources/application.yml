@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: aws-docproc-api
+
+  profiles:
+    default: local
+
+  mvc:
+    servlet:
+      path: /api/v1
+
+  output:
+    ansi:
+      enabled: always # Включить поддержку ANSI
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - env    # only in dev mode
+          - beans  # only in dev mode
+
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
