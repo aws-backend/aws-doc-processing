@@ -1,20 +1,28 @@
 plugins {
-	id("java")
+	java
+	id("org.springframework.boot") version "4.1.2" apply false
+	id("io.spring.dependency-management") version "1.1.7" apply false
 }
 
-group = "com.gmail.alexei28.aws"
-version = "0.0.1-SNAPSHOT"
-
-repositories {
-	mavenCentral()
+allprojects {
+	group = "com.gmail.alexei28.docproc"
+	version = "1.0.0"
 }
 
-dependencies {
-	testImplementation(platform("org.junit:junit-bom:6.0.0"))
-	testImplementation("org.junit.jupiter:junit-jupiter")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+subprojects {
+	apply(plugin = "java")
 
-tasks.test {
-	useJUnitPlatform()
+	extensions.configure<JavaPluginExtension> {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
+	tasks.withType<Test> {
+		useJUnitPlatform()
+	}
+
+	repositories {
+		mavenCentral()
+	}
 }
