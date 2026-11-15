@@ -1,2 +1,15 @@
+# aws — ECS Fargate.
+spring:
+  data:
+    mongodb:
+      uri: ${DOCUMENTDB_URI}
+      database: ${MONGODB_DATABASE:aws_docproc}
+
+aws:
+  sqs:
+    region: ${AWS_REGION:eu-north-1}
+    queue-url: ${SQS_QUEUE_URL}
+
 app:
-  environment: AWS
+  processing:
+    mode: aws

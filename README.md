@@ -9,235 +9,225 @@ Git Issues: https://github.com/aws-backend/aws-doc-processing/issues
 Git Project: https://github.com/orgs/aws-backend/projects/3
 
 
-## Основной сценарий
-1. Пользователь отправляет документ
-
-   POST /api/v1/documents
-2. Spring Boot API
-
-   Валидирует запрос, генерирует ID и сохраняет документ со статусом PENDING.
-3. AWS DocumentDB
-
-   Хранит документы с гибкой JSON-структурой.
-4. AWS SQS
-
-   Получает сообщение о необходимости обработки документа.
-5. AWS Lambda
-
-   Получает сообщение из SQS, выполняет обработку и обновляет документ.
-6. AWS DocumentDB
-
-   Сохраняет результат обработки и статус COMPLETED либо FAILED.
-7. Spring Boot API
-
-   Позволяет получить актуальный статус документа.
-
-Инфраструктура
-- ECS Fargate — запуск Spring Boot контейнера.
-- Secrets Manager — хранение credentials.
-- CloudWatch Logs — логи Spring Boot и Lambda.
-- SQS DLQ — изоляция сообщений, которые не удалось обработать.
-
-## Пример бизнес-сценария
-Пользователь отправляет:
-```json
-{
-  "type": "INVOICE",
-  "metadata": {
-    "source": "ERP",
-    "department": "FINANCE"
-  },
-  "payload": {
-    "invoiceNumber": "INV-2026-001",
-    "amount": 1500.50,
-    "currency": "EUR",
-    "items": [
-      {
-        "name": "Laptop",
-        "quantity": 2,
-        "price": 750.25
-      }
-    ]
-  }
-}
-```
-Система должна:
-1. Сохранить документ.
-2. Поставить задачу в очередь.
-3. Асинхронно обработать документ.
-4. Проверить бизнес-правила.
-5. Сохранить результат.
-6. Предоставить API для получения результата
-
-## Архитектурные компоненты:
-| Компонент | Ответственность |
-| :--- | :--- |
-| **Spring Boot** | REST API и бизнес-логика |
-| **DocumentDB** | Хранение документов |
-| **SQS** | Асинхронная доставка задач |
-| **SQS DLQ** | Необработанные сообщения |
-| **Lambda** | Обработка документов |
-| **Secrets Manager** | Credentials и конфигурационные секреты |
-| **ECS Fargate** | Запуск Spring Boot |
-| **ECR** | Хранение Docker image |
-| **CloudWatch Logs** | Централизованные логи |
-
-
-Важное архитектурное решение: 
-
-Lambda будет отдельным deployable-компонентом, но её исходный код будет находиться в том же Gradle multi-module проекте.
-Это позволит использовать общие Java-модели и не дублировать контракты сообщений.
-
-## Ответственность модулей
-| Модуль | Тип | Spring Boot |
-| :--- | :--- | :--- |
-| **docproc-contracts** | Java library | Нет |
-| **docproc-domain** | Java library | Нет |
-| **docproc-api** | Application | Да |
-| **docproc-lambda** | AWS Lambda | Нет |
-
-Почему именно такое разделение:
-- contracts — единый контракт между API и Lambda.
-- domain — бизнес-правила не зависят от AWS.
-- api — приложение, которое принимает запросы.
-- lambda — независимый deployment artifact.
-
- Таким образом, API и Lambda можно собирать и разворачивать независим
-
-## Структура исходного кода
-```text
-aws-doc-processing/
-│
-├── build.gradle.kts
-├── settings.gradle.kts
-├── gradle.properties
-│
-├── aws-docproc-contracts/
-│   └── src/main/java/
-│       └── .../contracts/
-│           ├── DocumentProcessingMessage.java
-│           └── DocumentProcessingResult.java
-│
-├── aws-docproc-domain/
-│   └── src/main/java/
-│       └── .../domain/
-│           ├── model/
-│           │   ├── Document.java
-│           │   └── DocumentStatus.java
-│           ├── service/
-│           │   └── DocumentProcessingService.java
-│           └── exception/
-│
-├── aws-docproc-api/
-│   └── src/main/
-│       ├── java/.../api/
-│       │   ├── DocumentApiApplication.java
-│       │   ├── config/
-│       │   ├── controller/
-│       │   ├── dto/
-│       │   ├── service/
-│       │   ├── repository/
-│       │   ├── messaging/
-│       │   ├── outbox/
-│       │   └── exception/
-│       └── resources/
-│           ├── application.yml
-│           ├── application-local.yml
-│           └── application-aws.yml
-│
-├── aws-docproc-lambda/
-│   └── src/
-│       ├── main/java/.../lambda/
-│       │   ├── DocumentProcessingHandler.java
-│       │   ├── DocumentProcessor.java
-│       │   ├── DocumentRepository.java
-│       │   └── config/
-│       └── test/
-│
-└── infrastructure/
-    ├── docker/
-    │   └── Dockerfile
-    ├── local/
-    │   └── docker-compose.yml
-    └── terraform/
-        ├── main.tf
-        ├── variables.tf
-        ├── networking.tf
-        ├── documentdb.tf
-        ├── sqs.tf
-        ├── lambda.tf
-        ├── ecs.tf
-        ├── secrets.tf
-        └── iam.tf
-```
-
-
-## Зачем нужен MognoDB?
-MongoDB нужен в нашем учебном проекте как локальная замена AWS DocumentDB.
-
-Мы используем его, чтобы разрабатывать и тестировать приложение на компьютере, не подключаясь постоянно к AWS.
-
-### MongoDB и AWS DocumentDB — какая связь?
-
-### Local environment
-Spring Boot Application
-- Java 21 · Spring Data MongoDB
-
-MongoDB
-- Docker · localhost:27017
-
-### AWS environment
-Spring Boot Application
-- Java 21 · Spring Data MongoDB
-
-Amazon DocumentDB
-- AWS managed database
-
-
-Оба варианта используют MongoDB-compatible API и MongoDB Java Driver. Однако DocumentDB — не просто MongoDB в AWS: у него собственная реализация и есть отличия в поддерживаемых возможностях.
-
-### Что именно мы храним в базе?
-В нашем проекте Document Processing Platform база хранит документы и информацию об их обработке.
+## 1. Архитектура проекта
+Пользователь отправляет документ на обработку через REST API.
 
 Например:
+```http request
+POST /api/v1/documents
+Content-Type: application/json
+```
 ```json
 {
-  "_id": "673a1f...",
   "fileName": "invoice-2026.pdf",
   "contentType": "application/pdf",
-  "status": "PENDING",
-  "createdAt": "2026-11-15T10:00:00Z",
-  "processedAt": null,
-  "errorMessage": null
+  "content": "BASE64_ENCODED_CONTENT"
 }
 ```
 
-Основные статусы:
-- PENDING — документ принят.
-- PROCESSING — документ обрабатывается Lambda.
-- COMPLETED — обработка завершена.
-- FAILED — обработка завершилась ошибкой.
+Система:
+Принимает документ.
+1. Сохраняет метаданные в DocumentDB.
+2. Создаёт сообщение в SQS.
+3. Возвращает HTTP 202 Accepted.
+4. Lambda получает сообщение из SQS.
+5. Lambda обрабатывает документ.
+6. Обновляет статус документа в DocumentDB.
+7. Если обработка не удалась, SQS повторяет доставку.
+8. После исчерпания попыток сообщение попадает в DLQ.
 
-### Почему не использовать DocumentDB локально?
-Потому что DocumentDB — управляемый AWS-сервис. Для его использования нужны AWS-инфраструктура, сеть, настройки безопасности и расходы.
+Общая архитектура AWS
 
-MongoDB в Docker позволяет:
-- разрабатывать без подключения к AWS;
-- запускать интеграционные тесты;
-- быстро проверять изменения;
-- не тратить деньги на AWS во время локальной разработки.
+                         CLIENT
+                            |
+                            v
+                 +---------------------+
+                 |   ECS Fargate       |
+                 |   Spring Boot API   |
+                 +---------------------+
+                     |             |
+                     |             |
+                     v             v
+              +------------+  +-----------+
+              | DocumentDB |  |    SQS    |
+              |            |  |  Main     |
+              +------------+  +-----------+
+                                    |
+                                    v
+                            +---------------+
+                            | AWS Lambda    |
+                            | Java 21       |
+                            +---------------+
+                                    |
+                                    v
+                              +------------+
+                              | DocumentDB |
+                              +------------+
+
+                    SQS Main
+                       |
+                 Max Receive Count
+                       |
+                       v
+                 +-----------+
+                 | SQS DLQ   |
+                 +-----------+
+
+       +--------------------+   +------------------+
+       | Secrets Manager    |   | CloudWatch Logs  |
+       +--------------------+   +------------------+
 
 
-### Какую архитектуру мы реализуем?
-| Компонент | Local | AWS |
-| :--- | :--- | :--- |
-| **Application** | Spring Boot | ECS Fargate |
-| **Database** | MongoDB Docker | DocumentDB |
-| **Messaging** | LocalStack SQS (планируется) | AWS SQS |
-| **Processing** | Локальная имитация / Lambda | AWS Lambda |
-| **Secrets** | Local config | Secrets Manager |
-| **Logs** | Console | CloudWatch |
+Важное архитектурное решение: Lambda вызывается не напрямую из Spring Boot через AWS SDK Lambda Client.
 
-Важный момент: MongoDB не является обязательным компонентом AWS-архитектуры. Это локальная инфраструктура для разработки. В AWS-профиле приложение должно подключаться непосредственно к DocumentDB.
+Вместо этого:
 
-Таким образом, мы сможем писать код один раз и запускать его в двух режимах: local и aws.
+Spring Boot → SQS → Lambda
+
+Lambda подключается к SQS через Event Source Mapping.
+
+Это предпочтительнее для нашего сценария, потому что:
+- SQS отвечает за доставку сообщений.
+- Lambda обрабатывает сообщения асинхронно.
+- SQS управляет повторными попытками.
+- DLQ сохраняет сообщения, которые не удалось обработать.
+- API не зависит от доступности Lambda в момент запроса.
+
+При этом AWS SDK для SQS будет использоваться непосредственно в Spring Boot.
+
+Зависимости:
+
+```text
+aws-docproc
+│
+├── aws-docproc-api
+│   ├── aws-docproc-contracts
+│   └── aws-docproc-domain
+│
+├── aws-docproc-contracts
+│
+├── aws-docproc-domain
+│   └── aws-docproc-contracts
+│
+└── aws-docproc-lambda
+├── aws-docproc-contracts
+└── aws-docproc-domain`
+```
+
+Правила архитектуры:
+1. domain не зависит от Spring Framework и AWS SDK.
+2. contracts не содержит бизнес-логики.
+3. api отвечает за REST и инфраструктурные адаптеры.
+4. lambda отвечает за AWS Lambda runtime и интеграцию с SQS.
+5. Бизнес-логика обработки документа находится в domain и переиспользуется API и Lambda.
+
+Так мы избежим дублирования бизнес-логики.
+
+
+## Структура каталогов
+```text
+aws-docproc/
+│
+├── settings.gradle.kts
+├── build.gradle.kts
+├── gradle.properties
+├── .gitignore
+├── docker-compose.yml
+├── README.md
+│
+├── aws-docproc-contracts/
+│   ├── build.gradle.kts
+│   └── src/main/java/com/gmail/alexei28/awsdocproc/contracts/
+│       ├── document/
+│       │   ├── CreateDocumentRequest.java
+│       │   ├── DocumentResponse.java
+│       │   └── DocumentStatus.java
+│       └── event/
+│           └── DocumentProcessingEvent.java
+│
+├── aws-docproc-domain/
+│   ├── build.gradle.kts
+│   └── src/
+│       ├── main/java/com/gmail/alexei28/awsdocproc/domain/
+│       │   ├── model/
+│       │   │   └── Document.java
+│       │   ├── exception/
+│       │   │   ├── DocumentNotFoundException.java
+│       │   │   └── DocumentProcessingException.java
+│       │   ├── port/
+│       │   │   └── DocumentRepository.java
+│       │   └── service/
+│       │       ├── DocumentService.java
+│       │       └── DocumentProcessor.java
+│       └── test/java/com/gmail/alexei28/awsdocproc/domain/
+│
+├── aws-docproc-api/
+│   ├── build.gradle.kts
+│   ├── Dockerfile
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/gmail/alexei28/awsdocproc/api/
+│       │   │   ├── AwsDocprocApplication.java
+│       │   │   ├── config/
+│       │   │   │   ├── MongoConfig.java
+│       │   │   │   ├── AwsConfig.java
+│       │   │   │   └── SchedulingConfig.java
+│       │   │   ├── controller/
+│       │   │   │   └── DocumentController.java
+│       │   │   ├── service/
+│       │   │   │   └── DocumentApplicationService.java
+│       │   │   ├── persistence/
+│       │   │   │   ├── DocumentMongoEntity.java
+│       │   │   │   ├── OutboxMongoEntity.java
+│       │   │   │   ├── SpringDataDocumentRepository.java
+│       │   │   │   └── DocumentRepositoryAdapter.java
+│       │   │   ├── messaging/
+│       │   │   │   ├── SqsDocumentEventPublisher.java
+│       │   │   │   └── OutboxPublisher.java
+│       │   │   └── exception/
+│       │   │       └── GlobalExceptionHandler.java
+│       │   └── resources/
+│       │       ├── application.yml
+│       │       ├── application-aws.yml
+│       │       └── application-default.yml
+│       └── test/
+│
+├── aws-docproc-lambda/
+│   ├── build.gradle.kts
+│   └── src/
+│       ├── main/java/com/gmail/alexei28/awsdocproc/lambda/
+│       │   ├── DocumentProcessingLambda.java
+│       │   ├── config/
+│       │   │   └── LambdaMongoConfig.java
+│       │   ├── persistence/
+│       │   │   ├── LambdaDocumentMongoEntity.java
+│       │   │   └── LambdaDocumentRepository.java
+│       │   └── processor/
+│       │       └── DocumentProcessingService.java
+│       └── test/
+│
+├── local/
+│   ├── localstack/
+│   │   └── init-aws.sh
+│   └── mongodb/
+│       └── init-replica-set.js
+│
+└── infra/
+    └── aws/
+        ├── 01-network.sh
+        ├── 02-documentdb.sh
+        ├── 03-sqs.sh
+        ├── 04-secrets-manager.sh
+        ├── 05-iam.sh
+        ├── 06-lambda.sh
+        ├── 07-ecr.sh
+        ├── 08-ecs.sh
+        └── 09-monitoring.sh
+
+```
+
+- local/ — локальная инфраструктура.
+- infra/aws/ — скрипты создания AWS-инфраструктуры.
+- application-default.yml — локальная конфигурация.
+- application-aws.yml — конфигурация AWS.
+- Lambda и API имеют собственные точки входа.

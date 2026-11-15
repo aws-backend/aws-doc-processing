@@ -1,21 +1,17 @@
+// Здесь намеренно не используется Spring Boot:
+// Lambda будет иметь лёгкий Java handler без поднятия полного Spring Application Context при каждой инициализации.
 plugins {
     java
-    id("io.spring.dependency-management")
 }
 
 dependencies {
-    // Domain
     implementation(project(":aws-docproc-domain"))
-    implementation(platform("software.amazon.awssdk:bom:2.41.1"))
-    implementation("software.amazon.awssdk:secretsmanager")
-    implementation("com.amazonaws:aws-lambda-java-core:1.4.1")
+    implementation(project(":aws-docproc-infrastructure"))
+    implementation(project(":aws-docproc-contracts"))
+
+    implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.16.1")
-    implementation("org.mongodb:mongodb-driver-sync:5.14.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.mockito:mockito-core")
-}
-
-tasks.test {
-    useJUnitPlatform()
 }

@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+aws:
+  region: eu-north-1
+
 spring:
   application:
     name: aws-docproc-api
@@ -14,25 +17,15 @@ spring:
 
   output:
     ansi:
-      enabled: always # Включить поддержку ANSI
-
-  # Spring Boot, запущенный непосредственно на local host, сможет подключиться к MongoDB в Docker.
-  # MongoDB здесь используется исключительно для локальной разработки. В AWS-профиле будем использовать Amazon DocumentDB.
-  mongodb:
-    uri: mongodb://localhost:27017/docproc?retryWrites=false
+      enabled: always
 
 management:
   endpoints:
     web:
       exposure:
-        include:
-          - health
-          - info
-          - env    # only in dev mode
-          - beans  # only in dev mode
+        include: health,info,metrics
 
   endpoint:
     health:
       probes:
         enabled: true
-

@@ -12,7 +12,6 @@ ${AnsiColor.GREEN}
     Spring Profile:      ${spring.profiles.default}
 
     App Name:            ${spring.application.name}
-    App Version:         @app.version@
     Port:                ${server.port}
 -------------------------------------------------------------------
 ${AnsiColor.DEFAULT}

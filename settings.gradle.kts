@@ -1,6 +1,9 @@
 rootProject.name = "aws-docproc"
 
-include("aws-docproc-api")
-include("aws-docproc-contracts")
-include("aws-docproc-domain")
-include("aws-docproc-lambda")
+include(
+    "aws-docproc-api",
+    "aws-docproc-contracts",
+    "aws-docproc-domain",
+    "aws-docproc-lambda",
+    "aws-docproc-infrastructure"
+)

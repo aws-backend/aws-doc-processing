@@ -1,0 +1,16 @@
+# default — локальная машина.
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/aws_docproc?replicaSet=rs0}
+      database: ${MONGODB_DATABASE:aws_docproc}
+
+aws:
+  sqs:
+    endpoint: ${SQS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:eu-north-1}
+    queue-url: ${SQS_QUEUE_URL:http://localhost:4566/000000000000/document-processing}
+
+app:
+  processing:
+    mode: local
