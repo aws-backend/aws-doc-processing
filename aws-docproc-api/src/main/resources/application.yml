@@ -16,6 +16,11 @@ spring:
     ansi:
       enabled: always # Включить поддержку ANSI
 
+  # Spring Boot, запущенный непосредственно на local host, сможет подключиться к MongoDB в Docker.
+  # MongoDB здесь используется исключительно для локальной разработки. В AWS-профиле будем использовать Amazon DocumentDB.
+  mongodb:
+    uri: mongodb://localhost:27017/docproc?retryWrites=false
+
 management:
   endpoints:
     web:
