@@ -8,6 +8,102 @@ Git Issues: https://github.com/aws-backend/aws-doc-processing/issues
 
 Git Project: https://github.com/orgs/aws-backend/projects/3
 
+
+## Основной сценарий
+1. Пользователь отправляет документ
+
+   POST /api/v1/documents
+2. Spring Boot API
+
+   Валидирует запрос, генерирует ID и сохраняет документ со статусом PENDING.
+3. AWS DocumentDB
+
+   Хранит документы с гибкой JSON-структурой.
+4. AWS SQS
+
+   Получает сообщение о необходимости обработки документа.
+5. AWS Lambda
+
+   Получает сообщение из SQS, выполняет обработку и обновляет документ.
+6. AWS DocumentDB
+
+   Сохраняет результат обработки и статус COMPLETED либо FAILED.
+7. Spring Boot API
+
+   Позволяет получить актуальный статус документа.
+
+Инфраструктура
+- ECS Fargate — запуск Spring Boot контейнера.
+- Secrets Manager — хранение credentials.
+- CloudWatch Logs — логи Spring Boot и Lambda.
+- SQS DLQ — изоляция сообщений, которые не удалось обработать.
+
+## Пример бизнес-сценария
+Пользователь отправляет:
+```json
+{
+  "type": "INVOICE",
+  "metadata": {
+    "source": "ERP",
+    "department": "FINANCE"
+  },
+  "payload": {
+    "invoiceNumber": "INV-2026-001",
+    "amount": 1500.50,
+    "currency": "EUR",
+    "items": [
+      {
+        "name": "Laptop",
+        "quantity": 2,
+        "price": 750.25
+      }
+    ]
+  }
+}
+```
+Система должна:
+1. Сохранить документ.
+2. Поставить задачу в очередь.
+3. Асинхронно обработать документ.
+4. Проверить бизнес-правила.
+5. Сохранить результат.
+6. Предоставить API для получения результата
+
+## Архитектурные компоненты:
+| Компонент | Ответственность |
+| :--- | :--- |
+| **Spring Boot** | REST API и бизнес-логика |
+| **DocumentDB** | Хранение документов |
+| **SQS** | Асинхронная доставка задач |
+| **SQS DLQ** | Необработанные сообщения |
+| **Lambda** | Обработка документов |
+| **Secrets Manager** | Credentials и конфигурационные секреты |
+| **ECS Fargate** | Запуск Spring Boot |
+| **ECR** | Хранение Docker image |
+| **CloudWatch Logs** | Централизованные логи |
+
+
+Важное архитектурное решение: 
+
+Lambda будет отдельным deployable-компонентом, но её исходный код будет находиться в том же Gradle multi-module проекте.
+Это позволит использовать общие Java-модели и не дублировать контракты сообщений.
+
+## Ответственность модулей
+| Модуль | Тип | Spring Boot |
+| :--- | :--- | :--- |
+| **docproc-contracts** | Java library | Нет |
+| **docproc-domain** | Java library | Нет |
+| **docproc-api** | Application | Да |
+| **docproc-lambda** | AWS Lambda | Нет |
+
+Почему именно такое разделение:
+- contracts — единый контракт между API и Lambda.
+- domain — бизнес-правила не зависят от AWS.
+- api — приложение, которое принимает запросы.
+- lambda — независимый deployment artifact.
+
+ Таким образом, API и Lambda можно собирать и разворачивать независим
+
 ## Структура исходного кода
 ```text
 aws-doc-processing/
