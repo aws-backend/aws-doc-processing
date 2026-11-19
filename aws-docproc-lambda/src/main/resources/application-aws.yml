@@ -1,0 +1,6 @@
+# Настройки MongoDB передаются через environment variables.
+# Для production предпочтительно получать credentials из AWS Secrets Manager.
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}

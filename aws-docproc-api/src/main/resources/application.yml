@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: aws-docproc-api
+
+  profiles:
+    default: local
+
+server:
+  port: 8080
+
+app:
+  aws:
+    region: eu-north-1

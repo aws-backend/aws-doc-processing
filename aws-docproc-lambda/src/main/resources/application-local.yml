@@ -1,0 +1,11 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/aws_docproc
+
+app:
+  aws:
+    endpoint: http://localhost:4566
+
+  sqs:
+    queue-url: http://localhost:4566/000000000000/documents-queue

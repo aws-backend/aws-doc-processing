@@ -1,0 +1,11 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+
+app:
+  aws:
+    endpoint: ""
+
+  sqs:
+    queue-url: ${SQS_QUEUE_URL}

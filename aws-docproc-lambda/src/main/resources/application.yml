@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: aws-docproc-lambda
+
+  profiles:
+    default: local
+
+app:
+  aws:
+    region: eu-north-1
