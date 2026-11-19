@@ -14,7 +14,6 @@ public class DocumentProcessor {
     }
 
     public void process(String documentId) {
-
         Document document = documentStore.findById(documentId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -38,7 +37,6 @@ public class DocumentProcessor {
 
         try {
             Map<String, Object> result = processContent(document.content());
-
             documentStore.update(new Document(
                     document.id(),
                     document.content(),
@@ -60,19 +58,12 @@ public class DocumentProcessor {
                     document.createdAt(),
                     Instant.now()
             ));
-
-            throw new RuntimeException(
-                    "Document processing failed: " + documentId,
-                    exception
-            );
+            throw new RuntimeException("Document processing failed: " + documentId, exception);
         }
     }
 
-    private Map<String, Object> processContent(
-            Map<String, Object> content
-    ) {
+    private Map<String, Object> processContent(Map<String, Object> content) {
         // Здесь будет реальная бизнес-логика.
-
         return Map.of(
                 "valid", true,
                 "processed", true
