@@ -10,6 +10,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("org.springframework.boot:spring-boot-starter-json")
 
     implementation(platform("software.amazon.awssdk:bom:2.35.0"))
     implementation("software.amazon.awssdk:sqs")
