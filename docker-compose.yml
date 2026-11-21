@@ -1,7 +1,9 @@
 services:
 
+  # Запуск MongoDB отдельно
+  # docker compose up -d mongodb
   mongodb:
-    image: mongo:7.0
+    image: mongo:8.0
     container_name: aws-docproc-mongodb
     ports:
       - "27017:27017"

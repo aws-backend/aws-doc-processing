@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/*-
+    Запускаем REST API:
+    ./gradlew :aws-docproc-api:bootRun  --args='--spring.profiles.active=local'
+ */
 @SpringBootApplication
 public class ApiApplication {
     private static final Logger logger = LoggerFactory.getLogger(ApiApplication.class);

@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.SpringApplication;
 
+/*
+  Запускаем Lambda Poller
+  ./gradlew :aws-docproc-lambda:bootRun  --args='--spring.profiles.active=local'
+ */
 @SpringBootApplication
 public class LambdaApplication {
     private static final Logger logger = LoggerFactory.getLogger(LambdaApplication.class);
